@@ -4,14 +4,13 @@
     <div class="item" v-for="instance in instanceList" :key="instance.id">
       <div class="item__field" v-for="(value, key) in instance" :key="key">
         <div class="item__field__key">{{ key }}:</div>
-        <div class="item__field__value">
-          {{ value }}
-        </div>
+        <div class="item__field__value">{{ value }}</div>
       </div>
     </div>
-    <div class="card__empty" v-if="instanceList.length < 1">
-      There are no {{ value.type }} items yet. Create one using the form below.
-    </div>
+    <div
+      class="card__empty"
+      v-if="instanceList.length < 1"
+    >There are no {{ value.type }} items yet. Create one using the form below.</div>
     <app-text type="h2">New {{ value.type }}</app-text>
     <div v-for="field in value.fields" :key="field">
       <app-input
@@ -20,7 +19,11 @@
         :placeholder="title(field)"
         :disabled="flight"
       />
+      <div v-for="(option,key) in options" :key="key">
+        <app-input placeholder="Option" v-model="option.title" :disabled="flight" />
+      </div>
     </div>
+    <app-button @click.native="add">Add option</app-button>
     <button
       :class="['button', `button__valid__${!!valid && !flight && hasAddress}`]"
       @click="submit"
@@ -29,8 +32,7 @@
       <div class="button__label" v-if="flight">
         <div class="button__label__icon">
           <icon-refresh />
-        </div>
-        Sending transaction...
+        </div>Sending transaction...
       </div>
     </button>
   </div>
@@ -130,6 +132,7 @@ export default {
     return {
       fields: {},
       flight: false,
+      options: [],
     };
   },
   created() {
@@ -154,10 +157,20 @@ export default {
     title(string) {
       return string.charAt(0).toUpperCase() + string.slice(1);
     },
+    add() {
+      this.options = [...this.options, { title: "" }];
+    },
     async submit() {
       if (this.valid && !this.flight && this.hasAddress) {
         this.flight = true;
-        const payload = { type: this.value.type, body: this.fields };
+        //const payload = { type: this.value.type, body: this.fields };
+        const payload = {
+          type: this.value.type,
+          body: {
+            title: this.fields["title"],
+            options: this.options.map((o) => o.title),
+          },
+        };
         await this.$store.dispatch("entitySubmit", payload);
         await this.$store.dispatch("entityFetch", payload);
         this.flight = false;
